@@ -1,11 +1,10 @@
 //
 // // Browser support
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
-navigator.getUserMedia = ( navigator.getUserMedia ||
+navigator.getUserMedia = navigator.getUserMedia ||
                        navigator.webkitGetUserMedia ||
                        navigator.mozGetUserMedia ||
-                       navigator.msGetUserMedia);
-
+                       navigator.msGetUserMedia;
 // var microphone;
 // var analyser;
 // var frequencyData;
@@ -74,39 +73,69 @@ navigator.getUserMedia = ( navigator.getUserMedia ||
 // // }, errorCallback);
 
 // Above were my attempts at using HTML 5 till I found WebAudiox
+//
+// var context;
+// var microphone = new WebAudiox.LineOut(context);
+// microphone.volume = 0.2;
+//
+// var analyser = context.createAnalyser();
+// analyser.connect(microphone.destination);
+// microphone.destination = analyser;
+// analyser.fftSize = 1024;
+// var myDataArray = new Float32Array(analyser.frequencyBinCount); // Float32Array should be the same length as the frequencyBinCount
 
-var context = new AudioContext();
-var microphone = new WebAudiox.LineOut(context);
-microphone.volume = 0.2;
-
-var analyser = context.createAnalyser();
-analyser.connect(microphone.destination);
-microphone.destination = analyser;
-analyser.fftSize = 1024;
-var myDataArray = new Float32Array(analyser.frequencyBinCount); // Float32Array should be the same length as the frequencyBinCount
 
 
+//  function noteFromPitch( frequency ) {
+// 	var noteNum = 12 * (Math.log( frequency / 440 )/Math.log(2) );
+// 	return Math.round( noteNum ) + 69;
+// }
+//
+// function frequencyFromNoteNumber( note ) {
+// 	return 440 * Math.pow(2,(note-69)/12);
 
- function noteFromPitch( frequency ) {
-	var noteNum = 12 * (Math.log( frequency / 440 )/Math.log(2) );
-	return Math.round( noteNum ) + 69;
-}
 
-function frequencyFromNoteNumber( note ) {
-	return 440 * Math.pow(2,(note-69)/12);
-}
+var context;
+var microphone;
+var analyser;
+//
+// var analyser = context.createAnalyser();
+// analyser.connect(microphone.destination);
+// microphone.destination = analyser;
+// analyser.fftSize = 1024;
+// var myDataArray = new Float32Array(analyser.frequencyBinCount);
+
+
 
 $('.btn-success').on('click', function(){
   event.preventDefault();
   console.log(event.target);
+  window.AudioContext = window.AudioContext || window.webkitAudioContext;
+  navigator.getUserMedia = navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia ||
+                         navigator.msGetUserMedia;
   navigator.getUserMedia ({audio: true}, function gotStream(stream){
-    var source = context.createMediaStreamSource(stream);
-    source.connect(microphone.destination);
+    context = new AudioContext();
+    var analyser = context.createAnalyser();
+    microphone = context.createMediaStreamSource(stream);
+    microphone.connect(analyser);
+    process();
   },
     function(){
       consle.warn("error");
     });
+    function process(){
+      setInterval(function(){
+        FFTData = new Float32Array(analyser.frequencyBinCount);
+        analyser.getFloatFrequencyData(FFTData);
+        console.log(FFTData[0]);
+      }, 10);
+    }
 });
+
+
+
 
 $('.btn-warning').on('click', function(){
   // event.preventDefault();
@@ -122,5 +151,6 @@ $('.btn-warning').on('click', function(){
 
 $('.btn-danger').on('click', function(){
   event.preventDefault();
+  context.stop;
 
 });
